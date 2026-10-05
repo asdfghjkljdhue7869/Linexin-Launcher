@@ -272,7 +272,7 @@ FocusScope {
             }
 
             highlight: Rectangle {
-                color: colorWithAlpha(Kirigami.Theme.highlightColor, 0.5)
+                color: colorWithAlpha(Kirigami.Theme.highlightColor, glassWash.glassOn ? 0.0 : 0.5)
                 radius: 12
 
                 // Fade + scale in on first appearance instead of teleporting,

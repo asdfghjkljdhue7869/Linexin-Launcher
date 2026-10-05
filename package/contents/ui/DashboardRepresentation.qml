@@ -769,12 +769,147 @@ Kicker.DashboardWindow {
             }
         }
 
+        Item {
+            id: glassWash
+            anchors.fill: parent
+            property int tier: 0
+            property bool glassOn: true
+            visible: glassOn
+            property bool animate: false
+            property real blobSize: Math.max(width, height) * (tier === 0 ? 0.85 : 1.0)
+            function rnd(a, b) { return a + Math.random() * (b - a) }
+            function reshuffle() {
+                var lx = -blobSize * 0.3
+                var rx = width - blobSize * 0.7
+                var ty = -blobSize * 0.3
+                var by = height - blobSize * 0.7
+                blobPink.x = rnd(lx, rx)
+                blobPink.y = rnd(ty, by)
+                blobCyan.x = rnd(lx, rx)
+                blobCyan.y = rnd(ty, by)
+                blobViolet.x = rnd(lx, rx)
+                blobViolet.y = rnd(ty, by)
+                blobCoral.x = rnd(lx, rx)
+                blobCoral.y = rnd(ty, by)
+                blobBlue.x = rnd(lx, rx)
+                blobBlue.y = rnd(ty, by)
+            }
+            Image {
+                id: blobPink
+                source: Qt.resolvedUrl("glass-pink.png")
+                width: glassWash.blobSize
+                height: width
+                opacity: 0.7
+                smooth: true
+                mipmap: true
+                Behavior on x {
+                    enabled: glassWash.animate
+                    NumberAnimation { duration: 8000; easing.type: Easing.InOutSine }
+                }
+                Behavior on y {
+                    enabled: glassWash.animate
+                    NumberAnimation { duration: 8000; easing.type: Easing.InOutSine }
+                }
+            }
+            Image {
+                id: blobCyan
+                source: Qt.resolvedUrl("glass-cyan.png")
+                width: glassWash.blobSize
+                height: width
+                opacity: 0.7
+                smooth: true
+                mipmap: true
+                Behavior on x {
+                    enabled: glassWash.animate
+                    NumberAnimation { duration: 8000; easing.type: Easing.InOutSine }
+                }
+                Behavior on y {
+                    enabled: glassWash.animate
+                    NumberAnimation { duration: 8000; easing.type: Easing.InOutSine }
+                }
+            }
+            Image {
+                id: blobViolet
+                source: Qt.resolvedUrl("glass-violet.png")
+                width: glassWash.blobSize
+                height: width
+                opacity: 0.7
+                smooth: true
+                mipmap: true
+                Behavior on x {
+                    enabled: glassWash.animate
+                    NumberAnimation { duration: 8000; easing.type: Easing.InOutSine }
+                }
+                Behavior on y {
+                    enabled: glassWash.animate
+                    NumberAnimation { duration: 8000; easing.type: Easing.InOutSine }
+                }
+            }
+            Image {
+                id: blobBlue
+                source: Qt.resolvedUrl("glass-blue.png")
+                width: glassWash.blobSize
+                height: width
+                opacity: 0.6
+                smooth: true
+                mipmap: true
+                Behavior on x {
+                    enabled: glassWash.animate
+                    NumberAnimation { duration: 8000; easing.type: Easing.InOutSine }
+                }
+                Behavior on y {
+                    enabled: glassWash.animate
+                    NumberAnimation { duration: 8000; easing.type: Easing.InOutSine }
+                }
+            }
+            Image {
+                id: blobCoral
+                source: Qt.resolvedUrl("glass-coral.png")
+                width: glassWash.blobSize
+                height: width
+                opacity: 0.55
+                smooth: true
+                mipmap: true
+                Behavior on x {
+                    enabled: glassWash.animate
+                    NumberAnimation { duration: 8000; easing.type: Easing.InOutSine }
+                }
+                Behavior on y {
+                    enabled: glassWash.animate
+                    NumberAnimation { duration: 8000; easing.type: Easing.InOutSine }
+                }
+            }
+            Timer {
+                interval: 7000
+                repeat: true
+                running: root.visible && glassWash.glassOn
+                onRunningChanged: {
+                    if (running) {
+                        glassWash.animate = false
+                        glassWash.reshuffle()
+                        glassWash.animate = true
+                        glassWash.reshuffle()
+                    }
+                }
+                onTriggered: glassWash.reshuffle()
+            }
+        }
+        ShaderEffectSource {
+            id: washTex
+            sourceItem: glassWash
+            live: root.visible && glassWash.glassOn
+            visible: false
+            hideSource: false
+            smooth: true
+            textureSize: Qt.size(Math.max(16, Math.round(rootItem.width / (glassWash.tier === 0 ? 10 : 4))), Math.max(16, Math.round(rootItem.height / (glassWash.tier === 0 ? 10 : 4))))
+        }
+
         // Background with blur-like tinted overlay
         Rectangle {
             id: bgRect
             anchors.fill: parent
             color: root.bgColor
-            opacity: root.bgOpacity
+            opacity: root.bgOpacity * (glassWash.glassOn ? 0.12 : 0.4)
 
             Behavior on color {
                 ColorAnimation { duration: root.hoverEffectDuration }
@@ -2063,6 +2198,13 @@ Kicker.DashboardWindow {
             }
         }
 
+        Timer {
+            id: dashReloadTimer
+            interval: 150
+            repeat: false
+            onTriggered: dashboardModel.reload()
+        }
+
         // Instantiator to extract app data from the Kicker model
         Instantiator {
             id: allAppsHelper
@@ -2078,8 +2220,8 @@ Kicker.DashboardWindow {
             }
             onObjectAdded: (index, object) => {
                 // Reload dashboard model when all apps become available
-                if (index === count - 1 && Plasmoid.configuration.showAllAppsInDashboard) {
-                    dashboardModel.reload();
+                if (Plasmoid.configuration.showAllAppsInDashboard) {
+                    dashReloadTimer.restart();
                 }
             }
         }
@@ -2586,8 +2728,18 @@ Kicker.DashboardWindow {
             }
 
             background: Rectangle {
-                color: colorWithAlpha(Kirigami.Theme.backgroundColor, 0.75)
+                color: glassWash.glassOn ? "transparent" : colorWithAlpha(Kirigami.Theme.backgroundColor, 0.75)
                 radius: height / 2
+                GlassBacking {
+                    anchors.fill: parent
+                    rootRef: rootItem
+                    washSource: washTex
+                    glassOn: glassWash.glassOn
+                    tier: glassWash.tier
+                    shown: root.visible
+                    tintSrc: colorWithAlpha(Kirigami.Theme.backgroundColor, 0.28)
+                    hover: (searchField.activeFocus) ? 1.0 : 0.0
+                }
                 border.width: searchField.activeFocus ? 2 : 1
                 border.color: searchField.activeFocus
                     ? Kirigami.Theme.highlightColor
@@ -2775,11 +2927,21 @@ Kicker.DashboardWindow {
                 border.width: activeFocus ? 2 : 0
                 border.color: Kirigami.Theme.focusColor
 
-                color: rootItem.showingDashboard
+                color: glassWash.glassOn ? "transparent" : rootItem.showingDashboard
                     ? colorWithAlpha(Kirigami.Theme.highlightColor, 0.85)
                     : dashCatMouse.containsMouse
                         ? colorWithAlpha(Kirigami.Theme.highlightColor, 0.25)
                         : colorWithAlpha(Kirigami.Theme.backgroundColor, 0.4)
+                GlassBacking {
+                    anchors.fill: parent
+                    rootRef: rootItem
+                    washSource: washTex
+                    glassOn: glassWash.glassOn
+                    tier: glassWash.tier
+                    shown: root.visible
+                    tintSrc: (rootItem.showingDashboard) ? colorWithAlpha(Kirigami.Theme.highlightColor, 0.5) : (dashCatMouse.containsMouse) ? colorWithAlpha(Kirigami.Theme.highlightColor, 0.2) : Qt.rgba(0, 0, 0, 0)
+                    hover: (dashCatMouse.containsMouse) ? 1.0 : 0.0
+                }
 
                 Behavior on color {
                     ColorAnimation { duration: root.hoverEffectDuration; easing.type: Easing.OutCubic }
@@ -2870,11 +3032,21 @@ Kicker.DashboardWindow {
                 border.width: activeFocus ? 2 : 0
                 border.color: Kirigami.Theme.focusColor
 
-                color: rootItem.showingAllApps
+                color: glassWash.glassOn ? "transparent" : rootItem.showingAllApps
                     ? colorWithAlpha(Kirigami.Theme.highlightColor, 0.85)
                     : allAppsCatMouse.containsMouse
                         ? colorWithAlpha(Kirigami.Theme.highlightColor, 0.25)
                         : colorWithAlpha(Kirigami.Theme.backgroundColor, 0.4)
+                GlassBacking {
+                    anchors.fill: parent
+                    rootRef: rootItem
+                    washSource: washTex
+                    glassOn: glassWash.glassOn
+                    tier: glassWash.tier
+                    shown: root.visible
+                    tintSrc: (rootItem.showingAllApps) ? colorWithAlpha(Kirigami.Theme.highlightColor, 0.5) : (allAppsCatMouse.containsMouse) ? colorWithAlpha(Kirigami.Theme.highlightColor, 0.2) : Qt.rgba(0, 0, 0, 0)
+                    hover: (allAppsCatMouse.containsMouse) ? 1.0 : 0.0
+                }
 
                 Behavior on color {
                     ColorAnimation { duration: root.hoverEffectDuration; easing.type: Easing.OutCubic }
@@ -2980,11 +3152,21 @@ Kicker.DashboardWindow {
                     border.width: activeFocus ? 2 : 0
                     border.color: Kirigami.Theme.focusColor
 
-                    color: categoryRow.currentCategory === index
+                    color: glassWash.glassOn ? "transparent" : categoryRow.currentCategory === index
                         ? colorWithAlpha(Kirigami.Theme.highlightColor, 0.85)
                         : catMouse.containsMouse
                             ? colorWithAlpha(Kirigami.Theme.highlightColor, 0.25)
                             : colorWithAlpha(Kirigami.Theme.backgroundColor, 0.4)
+                    GlassBacking {
+                        anchors.fill: parent
+                        rootRef: rootItem
+                        washSource: washTex
+                        glassOn: glassWash.glassOn
+                        tier: glassWash.tier
+                        shown: root.visible
+                        tintSrc: (categoryRow.currentCategory === index) ? colorWithAlpha(Kirigami.Theme.highlightColor, 0.5) : (catMouse.containsMouse) ? colorWithAlpha(Kirigami.Theme.highlightColor, 0.2) : Qt.rgba(0, 0, 0, 0)
+                        hover: (catMouse.containsMouse) ? 1.0 : 0.0
+                    }
 
                     Behavior on color {
                         ColorAnimation { duration: root.hoverEffectDuration; easing.type: Easing.OutCubic }
@@ -3125,9 +3307,19 @@ Kicker.DashboardWindow {
                     radius: height / 2
                     border.width: activeFocus ? 2 : 0
                     border.color: Kirigami.Theme.focusColor
-                    color: backMouse.containsMouse
+                    color: glassWash.glassOn ? "transparent" : backMouse.containsMouse
                         ? colorWithAlpha(Kirigami.Theme.highlightColor, 0.3)
                         : colorWithAlpha(Kirigami.Theme.backgroundColor, 0.4)
+                    GlassBacking {
+                        anchors.fill: parent
+                        rootRef: rootItem
+                        washSource: washTex
+                        glassOn: glassWash.glassOn
+                        tier: glassWash.tier
+                        shown: root.visible
+                        tintSrc: (backMouse.containsMouse) ? colorWithAlpha(Kirigami.Theme.highlightColor, 0.2) : Qt.rgba(0, 0, 0, 0)
+                        hover: (backMouse.containsMouse) ? 1.0 : 0.0
+                    }
 
                     Behavior on color {
                         ColorAnimation { duration: root.hoverEffectDuration; easing.type: Easing.OutCubic }
@@ -4275,6 +4467,64 @@ animatedEntrance: true
                         onStarted: dashDelegate.entranceComplete = true
                     }
 
+                    ShaderEffect {
+                        id: glassTile
+                        visible: !dashDelegate.isFolder && glassWash.glassOn
+                        anchors.centerIn: parent
+                        width: Math.round(root.cellSize * 0.86)
+                        height: width
+                        property variant wash: washTex
+                        property vector4d region: Qt.vector4d(0, 0, 0.1, 0.1)
+                        property real tier: glassWash.tier
+                        property real hover: ((dashMA.containsMouse || dashboardGrid.currentIndex === dashDelegate.itemIndex) && !dashMA.dragging) ? 1.0 : 0.0
+                        fragmentShader: Qt.resolvedUrl("glass.frag.qsb")
+                        opacity: (dashboardGrid.dragActive && dashboardGrid.dragFromIndex === dashDelegate.itemIndex) ? 0.0 : 1.0
+                        Behavior on opacity {
+                            NumberAnimation { duration: root.hoverEffectDuration }
+                        }
+                        Behavior on hover {
+                            SpringAnimation { spring: 3.5; damping: 0.22; epsilon: 0.005 }
+                        }
+                        function updateRegion() {
+                            if (rootItem.width <= 0 || rootItem.height <= 0 || root.columns < 1) return;
+                            var g = dashboardGrid.mapToItem(rootItem, 0, 0);
+                            var ip = dashDelegate.itemIndex % root.itemsPerPage;
+                            var col = ip % root.columns;
+                            var row = Math.floor(ip / root.columns);
+                            var cx = g.x + (col + 0.5) * dashboardGrid.cellWidth;
+                            var cy = g.y + (row + 0.5) * dashboardGrid.cellHeight;
+                            region = Qt.vector4d((cx - width / 2) / rootItem.width, (cy - height / 2) / rootItem.height, width / rootItem.width, height / rootItem.height);
+                        }
+                        function schedule() {
+                            Qt.callLater(updateRegion);
+                            glassRegionTimer.restart();
+                        }
+                        Timer {
+                            id: glassRegionTimer
+                            interval: 450
+                            onTriggered: glassTile.updateRegion()
+                        }
+                        Component.onCompleted: schedule()
+                        Connections {
+                            target: rootItem
+                            function onWidthChanged() { glassTile.schedule(); }
+                            function onHeightChanged() { glassTile.schedule(); }
+                        }
+                        Connections {
+                            target: dashboardView
+                            function onCurrentPageChanged() { glassTile.schedule(); }
+                        }
+                        Connections {
+                            target: root
+                            function onColumnsChanged() { glassTile.schedule(); }
+                            function onItemsPerPageChanged() { glassTile.schedule(); }
+                        }
+                        Connections {
+                            target: dashDelegate
+                            function onItemIndexChanged() { glassTile.schedule(); }
+                        }
+                    }
+
                     // GridView's current item is otherwise invisible: the delegates
                     // only had a hover treatment, so keyboard focus appeared lost.
                     Rectangle {
@@ -4392,6 +4642,7 @@ animatedEntrance: true
 
                         PlasmaComponents.Label {
                             text: model.name || ""
+                            renderType: Text.QtRendering
                             width: root.cellSize - 4
                             horizontalAlignment: Text.AlignHCenter
                             elide: Text.ElideRight
@@ -4658,17 +4909,33 @@ animatedEntrance: true
                 anchors.fill: dashboardGrid
                 acceptedButtons: Qt.NoButton
                 z: 1
+                id: pageWheelArea
                 property real wheelAccum: 0
+                property bool wheelLocked: false
+                Timer {
+                    id: wheelQuietTimer
+                    interval: 220
+                    onTriggered: {
+                        pageWheelArea.wheelLocked = false;
+                        pageWheelArea.wheelAccum = 0;
+                    }
+                }
                 onWheel: wheel => {
                     wheel.accepted = true;
                     var delta = wheel.angleDelta.y !== 0 ? wheel.angleDelta.y : wheel.angleDelta.x;
+                    var touch = wheel.pixelDelta.x !== 0 || wheel.pixelDelta.y !== 0 || (delta % 120 !== 0);
+                    if (touch) {
+                        wheelQuietTimer.restart();
+                        if (wheelLocked) return;
+                    }
                     wheelAccum += delta;
-                    // Require at least 120 units (one standard notch) to change page
                     if (wheelAccum >= 120) {
                         wheelAccum = 0;
+                        if (touch) wheelLocked = true;
                         dashboardView.stepPage(-1);
                     } else if (wheelAccum <= -120) {
                         wheelAccum = 0;
+                        if (touch) wheelLocked = true;
                         dashboardView.stepPage(1);
                     }
                 }

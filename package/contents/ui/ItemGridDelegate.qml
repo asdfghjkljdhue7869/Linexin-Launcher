@@ -160,6 +160,19 @@ Item {
 
         transformOrigin: Item.Center
 
+        GlassBacking {
+            anchors.centerIn: parent
+            width: Math.round(Math.min(item.width, item.height) * (item.groupLabel ? 0.86 : 0.97))
+            height: width
+            shader: Qt.resolvedUrl("glass.frag.qsb")
+            rootRef: rootItem
+            washSource: washTex
+            glassOn: glassWash.glassOn && item.showLabel
+            tier: glassWash.tier
+            shown: root.visible
+            hover: item.GridView.isCurrentItem ? 1.0 : 0.0
+        }
+
         Kirigami.Icon {
             id: iconItem
 

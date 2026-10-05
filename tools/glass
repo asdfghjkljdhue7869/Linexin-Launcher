@@ -1,0 +1,23 @@
+#!/bin/bash
+f="$HOME/.local/share/plasma/plasmoids/org.linexin.launcher/contents/ui/DashboardRepresentation.qml"
+cfg="$HOME/.config/liquidglass"
+mkdir -p "$cfg/hooks.d"
+case "$1" in
+  off) on=false; tier=0 ;;
+  lite) on=true; tier=0 ;;
+  full) on=true; tier=1 ;;
+  status) cat "$cfg/mode" 2>/dev/null || echo unknown; exit 0 ;;
+  *) echo "usage: glass off|lite|full|status"; exit 1 ;;
+esac
+[ -f "$f" ] || { echo "launcher file not found"; exit 1; }
+grep -q "property bool glassOn:" "$f" || { echo "glassOn anchor not found in launcher"; exit 1; }
+cp "$f" "$f.bak-glass"
+sed -i -E "s/(property bool glassOn: )(true|false)/\1$on/; s/(property int tier: )[0-9]+/\1$tier/" "$f"
+echo "$1" > "$cfg/mode"
+for h in "$cfg"/hooks.d/*; do
+  [ -x "$h" ] && "$h" "$1"
+done
+pkill -x plasmashell
+sleep 1
+setsid plasmashell --replace > /dev/null 2>&1 &
+echo "glass mode: $1"

@@ -665,11 +665,23 @@ Item {
                 }
 
                 // Hover / keyboard highlight pill
+                GlassBacking {
+                    anchors.fill: parent
+                    anchors.margins: Kirigami.Units.smallSpacing / 2
+                    rad: 0.6
+                    rootRef: rootItem
+                    washSource: washTex
+                    glassOn: glassWash.glassOn
+                    tier: glassWash.tier
+                    shown: root.visible
+                    tintSrc: (rowMouse.containsMouse || fileRow.GridView.isCurrentItem) ? colorWithAlpha(Kirigami.Theme.highlightColor, 0.22) : Qt.rgba(0, 0, 0, 0)
+                    hover: (rowMouse.containsMouse || fileRow.GridView.isCurrentItem) ? 1.0 : 0.0
+                }
                 Rectangle {
                     anchors.fill: parent
                     anchors.margins: Kirigami.Units.smallSpacing / 2
                     radius: 12
-                    color: colorWithAlpha(Kirigami.Theme.highlightColor, 0.5)
+                    color: colorWithAlpha(Kirigami.Theme.highlightColor, glassWash.glassOn ? 0.0 : 0.5)
                     opacity: (rowMouse.containsMouse || filesGrid.currentIndex === fileRow.itemIndex) ? 1 : 0
 
                     Behavior on opacity {
